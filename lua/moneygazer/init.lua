@@ -7,6 +7,11 @@ function M.setup()
         vim.cmd('syntax reset')
     end
 
+    -- Set global background to dark
+    vim.o.background = 'dark'
+    -- Set termguicolors to ensure hex colors work
+    vim.o.termguicolors = true
+
     -- Set colorscheme name
     vim.g.colors_name = 'moneygazer'
 
