@@ -1,0 +1,1 @@
+require('moneygazer').setup()
