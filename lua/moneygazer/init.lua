@@ -6,7 +6,7 @@ M.defaults = {
     terminal_colors = true,
     styles = {
         comments = { italic = true },
-        keywords = { italic = true },
+        keywords = { bold = true, italic = false },
         functions = {},
         variables = {},
         sidebars = 'dark',
@@ -20,49 +20,41 @@ M.defaults = {
     cache = true,
 }
 
+M.opts = M.defaults
+
 function M.setup(opts)
     opts = opts or {}
 
     local config = vim.tbl_deep_extend('force', {}, M.defaults, opts)
 
-    -- Clear highlights
     vim.cmd('highlight clear')
     if vim.fn.exists('syntax_on') then
         vim.cmd('syntax reset')
     end
 
-    -- Set global background
     if config.style == 'day' then
         vim.o.background = 'light'
     else
         vim.o.background = 'dark'
     end
 
-    -- Set termguicolors to ensure hex colors work
     vim.o.termguicolors = true
-
-    -- Set colorscheme name
     vim.g.colors_name = 'moneygazer'
 
-    -- Load palette
     local palette = require('moneygazer.palette')
 
-    -- Apply on_colors hook if provided
     if config.on_colors then
         config.on_colors(palette)
     end
 
-    -- Load utility functions
     local util = require('moneygazer.util')
 
-    -- Apply transparency if enabled
     if config.transparent then
         palette.background[50] = 'NONE'
         palette.background[100] = 'NONE'
         palette.background[200] = 'NONE'
     end
 
-    -- Apply style configuration
     if config.styles then
         if config.styles.sidebars == 'transparent' then
             palette.sidebar = 'NONE'
@@ -72,31 +64,25 @@ function M.setup(opts)
         end
     end
 
-    -- Set terminal colors if enabled
     if config.terminal_colors then
         M.set_terminal_colors(palette)
     end
 
-    -- Load and set highlight groups
     local groups = require('moneygazer.groups')
     local highlights = groups.setup(palette, config.styles, util)
 
-    -- Apply on_highlights hook if provided
     if config.on_highlights then
         config.on_highlights(highlights, palette)
     end
 
-    -- Apply all highlights
     for group, hl in pairs(highlights) do
         vim.api.nvim_set_hl(0, group, hl)
     end
 
-    -- Set up transparency for specific groups
     if config.transparent then
         M.setup_transparency()
     end
 
-    -- Dim inactive windows if enabled
     if config.dim_inactive then
         vim.api.nvim_create_autocmd('WinEnter', {
             callback = function()
@@ -110,6 +96,8 @@ function M.setup(opts)
         })
     end
 
+    M.force_keyword_highlighting(palette)
+
     return {
         colors = palette,
         highlights = highlights,
@@ -117,9 +105,98 @@ function M.setup(opts)
     }
 end
 
+function M.force_keyword_highlighting(palette)
+    local p = palette
+    local gold = p.primary[500]
+    local purple = p.secondary[500]
+
+    local core_keywords = {
+        'Keyword', 'Statement', 'Conditional', 'Repeat', 'Label',
+    }
+
+    for _, group in ipairs(core_keywords) do
+        pcall(vim.api.nvim_set_hl, 0, group, { fg = gold, bold = true })
+    end
+
+    local type_keywords = {
+        '@keyword.class', '@keyword.struct', '@keyword.interface',
+        '@keyword.enum', '@keyword.type', '@keyword.typedef',
+        '@keyword.module', '@keyword.package', '@keyword.namespace',
+        '@keyword.trait', '@keyword.abstract', '@keyword.final',
+        '@keyword.extends', '@keyword.implements',
+    }
+
+    for _, group in ipairs(type_keywords) do
+        pcall(vim.api.nvim_set_hl, 0, group, { fg = purple, bold = true })
+    end
+
+    local control_keywords = {
+        '@keyword.if', '@keyword.elif', '@keyword.then', '@keyword.else',
+        '@keyword.switch', '@keyword.case', '@keyword.for', '@keyword.while',
+        '@keyword.do', '@keyword.loop', '@keyword.repeat', '@keyword.until',
+        '@keyword.return', '@keyword.break', '@keyword.continue',
+        '@keyword.goto', '@keyword.try', '@keyword.catch', '@keyword.finally',
+        '@keyword.throw', '@keyword.except', '@keyword.raise', '@keyword.defer',
+    }
+
+    for _, group in ipairs(control_keywords) do
+        pcall(vim.api.nvim_set_hl, 0, group, { fg = gold, bold = true })
+    end
+
+    local modifier_keywords = {
+        '@keyword.const', '@keyword.let', '@keyword.var',
+        '@keyword.static', '@keyword.public', '@keyword.private',
+        '@keyword.protected', '@keyword.readonly', '@keyword.override',
+    }
+
+    for _, group in ipairs(modifier_keywords) do
+        pcall(vim.api.nvim_set_hl, 0, group, { fg = gold, bold = true })
+    end
+
+    local other_keywords = {
+        '@keyword', '@keyword.return', '@keyword.import', '@keyword.export',
+        '@keyword.from', '@keyword.as', '@keyword.function',
+        '@keyword.async', '@keyword.await', '@keyword.yield',
+        '@keyword.typeof', '@keyword.instanceof', '@keyword.new',
+        '@keyword.delete', '@keyword.void', '@keyword.null',
+        '@keyword.undefined', '@keyword.true', '@keyword.false',
+        '@keyword.this', '@keyword.super', '@keyword.self',
+        '@keyword.operator', '@keyword.debug', '@keyword.directive',
+        '@keyword.coroutine', '@keyword.exception', '@keyword.modifier',
+    }
+
+    for _, group in ipairs(other_keywords) do
+        pcall(vim.api.nvim_set_hl, 0, group, { fg = gold, bold = true })
+    end
+
+    local lang_keywords = {
+        '@keyword.crate', '@keyword.macro', '@keyword.mod', '@keyword.ref', '@keyword.move',
+        '@keyword.channel', '@keyword.go', '@keyword.select', '@keyword.range', '@keyword.map', '@keyword.chan',
+        '@keyword.extern', '@keyword.register', '@keyword.volatile', '@keyword.restrict', '@keyword.sizeof', '@keyword.alignof',
+        '@keyword.self', '@keyword.super', '@keyword.lambda',
+        '@keyword.decorator', '@keyword.decorator.parameter',
+        '@keyword.package', '@keyword.extends', '@keyword.implements', '@keyword.this',
+        '@keyword.begin', '@keyword.end', '@keyword.rescue', '@keyword.ensure', '@keyword.alias', '@keyword.undef', '@keyword.defined',
+        '@keyword.mutating', '@keyword.nonmutating', '@keyword.convenience',
+        '@keyword.use', '@keyword.in', '@keyword.of', '@keyword.where',
+        '@keyword.local', '@keyword.global', '@keyword.constant',
+    }
+
+    for _, group in ipairs(lang_keywords) do
+        pcall(vim.api.nvim_set_hl, 0, group, { fg = gold, bold = true })
+    end
+
+    local lsp_keywords = {
+        '@lsp.type.keyword',
+    }
+
+    for _, group in ipairs(lsp_keywords) do
+        pcall(vim.api.nvim_set_hl, 0, group, { fg = gold, bold = true })
+    end
+end
+
 function M.set_terminal_colors(palette)
     local g = vim.g
-
     g.terminal_color_0 = palette.background[50]
     g.terminal_color_1 = palette.primary[400]
     g.terminal_color_2 = palette.success[400]
@@ -140,20 +217,11 @@ end
 
 function M.setup_transparency()
     local transparent = { bg = 'NONE', ctermbg = 'NONE' }
-
     local groups_to_make_transparent = {
-        'Normal',
-        'NormalNC',
-        'NormalFloat',
-        'FloatBorder',
-        'Pmenu',
-        'PmenuSel',
-        'TelescopeNormal',
-        'TelescopeBorder',
-        'NvimTreeNormal',
-        'NvimTreeEndCol',
+        'Normal', 'NormalNC', 'NormalFloat', 'FloatBorder',
+        'Pmenu', 'PmenuSel', 'TelescopeNormal', 'TelescopeBorder',
+        'NvimTreeNormal', 'NvimTreeEndCol',
     }
-
     for _, group in ipairs(groups_to_make_transparent) do
         local hl = vim.api.nvim_get_hl(0, { name = group, link = false })
         if hl and hl.bg then
