@@ -497,7 +497,7 @@ function M.setup(palette, styles, util, opts)
         ["@keyword.important"] = { fg = p.accent[500], bold = true },
         ["@variable.bash"] = { fg = p.text[900] },
         ["@function.bash"] = { fg = p.secondary[400] },
-        ["@keyword.bash"] = { fg = p.secondary[500] },
+        ["@keyword.bash"] = { link = "Keyword" },
         ["@string.bash"] = { fg = p.accent[300] },
         ["@operator.bash"] = { fg = p.primary[500] },
         ["@tag.yaml"] = { fg = p.secondary[400] },
