@@ -6,9 +6,16 @@ M.defaults = {
     terminal_colors = true,
     styles = {
         comments = { italic = true },
-        keywords = { italic = true },
-        functions = {},
+        strings = {},
+        numbers = {},
+        booleans = {},
         variables = {},
+        functions = {},
+        conditionals = {},
+        loops = {},
+        operators = {},
+        keywords = { italic = true },
+        types = {},
         sidebars = 'dark',
         floats = 'dark',
     },
@@ -19,6 +26,8 @@ M.defaults = {
     on_highlights = nil,
     cache = true,
 }
+
+M.opts = M.defaults
 
 function M.setup(opts)
     opts = opts or {}
@@ -55,31 +64,20 @@ function M.setup(opts)
     -- Load utility functions
     local util = require('moneygazer.util')
 
-    -- Apply transparency if enabled
-    if config.transparent then
-        palette.background[50] = 'NONE'
-        palette.background[100] = 'NONE'
-        palette.background[200] = 'NONE'
-    end
-
-    -- Apply style configuration
-    if config.styles then
-        if config.styles.sidebars == 'transparent' then
-            palette.sidebar = 'NONE'
-        end
-        if config.styles.floats == 'transparent' then
-            palette.float = 'NONE'
-        end
-    end
-
     -- Set terminal colors if enabled
     if config.terminal_colors then
         M.set_terminal_colors(palette)
     end
 
+    -- Build opts object for groups.setup
+    local groups_opts = {
+        transparent_background = config.transparent,
+        styles = config.styles,
+    }
+
     -- Load and set highlight groups
     local groups = require('moneygazer.groups')
-    local highlights = groups.setup(palette, config.styles, util)
+    local highlights = groups.setup(palette, config.styles, util, groups_opts)
 
     -- Apply on_highlights hook if provided
     if config.on_highlights then
@@ -89,11 +87,6 @@ function M.setup(opts)
     -- Apply all highlights
     for group, hl in pairs(highlights) do
         vim.api.nvim_set_hl(0, group, hl)
-    end
-
-    -- Set up transparency for specific groups
-    if config.transparent then
-        M.setup_transparency()
     end
 
     -- Dim inactive windows if enabled
@@ -136,30 +129,6 @@ function M.set_terminal_colors(palette)
     g.terminal_color_13 = palette.accent[500]
     g.terminal_color_14 = palette.info[500]
     g.terminal_color_15 = palette.text[900]
-end
-
-function M.setup_transparency()
-    local transparent = { bg = 'NONE', ctermbg = 'NONE' }
-
-    local groups_to_make_transparent = {
-        'Normal',
-        'NormalNC',
-        'NormalFloat',
-        'FloatBorder',
-        'Pmenu',
-        'PmenuSel',
-        'TelescopeNormal',
-        'TelescopeBorder',
-        'NvimTreeNormal',
-        'NvimTreeEndCol',
-    }
-
-    for _, group in ipairs(groups_to_make_transparent) do
-        local hl = vim.api.nvim_get_hl(0, { name = group, link = false })
-        if hl and hl.bg then
-            vim.api.nvim_set_hl(0, group, vim.tbl_extend('force', hl, transparent))
-        end
-    end
 end
 
 function M.colors()
