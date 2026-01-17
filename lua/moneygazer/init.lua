@@ -25,6 +25,10 @@ M.defaults = {
     on_colors = nil,
     on_highlights = nil,
     cache = true,
+    integrations = {
+        lualine = true,
+        bufferline = true,
+    },
 }
 
 M.opts = M.defaults
@@ -218,6 +222,20 @@ end
 
 function M.highlights()
     return require('moneygazer.groups')
+end
+
+function M.lualine(opts)
+    opts = opts or {}
+    local palette = require('moneygazer.palette')
+    local special = require('moneygazer.special')
+    return special.lualine.get_theme(palette, opts)
+end
+
+function M.bufferline(opts)
+    opts = opts or {}
+    local palette = require('moneygazer.palette')
+    local special = require('moneygazer.special')
+    return special.bufferline.get_theme(palette, opts)
 end
 
 return M
