@@ -33,41 +33,6 @@ All notable changes to Moneygazer Neovim theme.
   - Shell/Bash (variables, functions, keywords)
   - YAML/JSON/TOML (keys, values, nulls)
   - Dockerfile, GraphQL, Makefile
-- **Enhanced keyword highlighting system:**
-  - Made main `@keyword` group bold for better visibility
-  - Added comprehensive keyword-related captures:
-    - Directives (directive, directive.define)
-    - Type keywords (type, type.enum, type.struct, type.interface, type.union, type.class)
-    - Modifiers (modifier, modifier.let, modifier.mut, modifier.ref, modifier.unsafe, modifier.const, modifier.static, volatile, register, thread_local, virtual, inline, extern, abstract, final, override)
-    - Operators (operator.logical, operator.arithmetic, operator.comparison, operator.bitwise, operator.assignment, operator.increment, operator.decrement)
-    - Flow control (switch, case, continue, goto, return, yield, try, catch, finally, throw, await, async)
-    - Storage (const, let, var, function, type, class, interface, extends, enum, new, super, this, static)
-    - Import/export (import, export, from, as, default, export.default, export.from, export.as)
-    - Access (public, private, protected, readonly, writeonly)
-    - Object-oriented (constructor, prototype, get, set, target, implements, extends, class)
-    - Other (null, undefined, true, false, and, or, not, in, instanceof, typeof, new, delete, void, this, super)
-    - Language-specific keywords for:
-      - C (register, volatile, restrict, sizeof, alignof, extern)
-      - Go (defer, go, select, range, map, chan, interface, struct)
-      - Rust (mut, move, mod, ref, crate, type)
-      - Java (extends, implements, interface, public, private, protected, this, super, final, abstract, static)
-      - Python (yield, with, as, import, from, nonlocal, global, lambda, class, raise)
-      - Ruby (def, class, module, begin, end, rescue, ensure, alias, defined?, unless, yield)
-      - Swift (mutating, nonmutating, convenience, override, required, optional, weak, unowned, lazy, final, let, var)
-      - Kotlin (val, var, object, companion, data, sealed, open, const, init, typealias, crossinline, reified, external, infix, suspend, tailrec, out, header, param, vararg, noinline)
-      - C# (using, lock, fixed, readonly, get, set, add, remove, where, select, join, group, into, partial, async, await, yield, checked, unchecked, unsafe, stackalloc, dynamic, extern)
-      - PHP (var, function, class, extends, implements, public, private, protected, abstract, final, static, final)
-      - CSS (important, property.class, property.id, property.class)
-      - Bash (function, variable)
-      - YAML/TOML (key, section)
-      - Dockerfile (keyword)
-      - GraphQL (keyword, type)
-      - Make (keyword, function, variable, operator)
-      - INI (section, key)
-      - CSV (col)
-      - Markdown (heading, link, code, list)
-  - GraphQL (argument, field, type)
-  - SQL (select, insert, update, delete, create, drop, alter, from, where, join, inner, outer, left, right, group, by, having, limit, offset, union, all, distinct, exists, between, like, and, or, not, is, null, in, distinct, case, when, escape)
 - LSP semantic token support:
   - Type highlights (class, enum, interface, struct)
   - Function/method highlights
@@ -108,17 +73,15 @@ All notable changes to Moneygazer Neovim theme.
 - Improved apply_style function for dynamic style application
 - Added proper transparency support throughout all highlights
 - Updated diagnostic colors to use semantic palette
-- Updated error handling for color manipulation utilities
-- Fixed template references to use Moneygazer's color palette
-- Ensured proper linking of related highlight groups
-- Fixed typo in highlight group names (keyword.yield -> keyword.yield)
+
+### Fixed
+- Fixed invalid characters in highlight group names (removed '?' from group names)
 - Fixed spacing issues in highlight group names
 - Improved error handling for color manipulation utilities
+- Fixed template references to use Moneygazer's color palette
+- Ensured proper linking of related highlight groups
 
 ### Improved
-- **Significantly improved keyword highlighting visibility with bold attribute**
-- **Added 100+ additional keyword-related capture groups for comprehensive language support**
-- **Organized keywords by category (types, modifiers, operators, flow control, storage, imports)**
 - Better accessibility with WCAG 2.2 AA/AAA compliance utilities
 - Enhanced code organization with clear comments
 - Improved documentation with extensive examples
