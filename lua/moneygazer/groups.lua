@@ -1,7 +1,18 @@
 local M = {}
 
-function M.setup(palette)
+function M.setup(palette, styles, util)
     local p = palette
+    local s = styles or {}
+    local u = util or {}
+
+    local function apply_style(group, style_table)
+        local hl = vim.deepcopy(group)
+        for key, value in pairs(style_table) do
+            hl[key] = value
+        end
+        return hl
+    end
+
     local highlights = {
         -- Editor UI
         Normal = { fg = p.text[900], bg = p.background[50] },
@@ -44,38 +55,38 @@ function M.setup(palette)
         Title = { fg = p.primary[500], bold = true },
         Question = { fg = p.primary[500], bold = true },
         MoreMsg = { fg = p.primary[500], bold = true },
-        ErrorMsg = { fg = p.background[50], bg = p.accent[500] },
+        ErrorMsg = { fg = p.background[50], bg = p.error[500] },
         WarningMsg = { fg = p.primary[500], bold = true },
         NonText = { fg = p.background[300] },
         SpecialKey = { fg = p.background[300] },
 
         -- Diagnostics
-        DiagnosticError = { fg = p.accent[500] },
-        DiagnosticWarn = { fg = p.primary[500] },
-        DiagnosticInfo = { fg = p.secondary[500] },
-        DiagnosticHint = { fg = p.text[600] },
-        DiagnosticUnderlineError = { undercurl = true, sp = p.accent[500] },
-        DiagnosticUnderlineWarn = { undercurl = true, sp = p.primary[500] },
-        DiagnosticUnderlineInfo = { undercurl = true, sp = p.secondary[500] },
-        DiagnosticUnderlineHint = { undercurl = true, sp = p.text[600] },
+        DiagnosticError = { fg = p.error[500] },
+        DiagnosticWarn = { fg = p.warning[500] },
+        DiagnosticInfo = { fg = p.info[500] },
+        DiagnosticHint = { fg = p.hint[500] },
+        DiagnosticUnderlineError = { undercurl = true, sp = p.error[500] },
+        DiagnosticUnderlineWarn = { undercurl = true, sp = p.warning[500] },
+        DiagnosticUnderlineInfo = { undercurl = true, sp = p.info[500] },
+        DiagnosticUnderlineHint = { undercurl = true, sp = p.hint[500] },
 
         -- Syntax
-        Comment = { fg = p.text[500], italic = true },
+        Comment = apply_style({ fg = p.text[500] }, s.comments or {}),
         Constant = { fg = p.accent[400] },
         String = { fg = p.accent[300] },
         Character = { fg = p.accent[400] },
         Number = { fg = p.primary[400] },
         Boolean = { fg = p.primary[400], bold = true },
         Float = { fg = p.primary[400] },
-        Identifier = { fg = p.text[800] },
-        Function = { fg = p.secondary[400] },
+        Identifier = apply_style({ fg = p.text[800] }, s.variables or {}),
+        Function = apply_style({ fg = p.secondary[400] }, s.functions or {}),
         Statement = { fg = p.primary[500] },
         Conditional = { fg = p.primary[500] },
         Repeat = { fg = p.primary[500] },
         Label = { fg = p.primary[500] },
         Operator = { fg = p.text[700] },
-        Keyword = { fg = p.primary[500], italic = true },
-        Exception = { fg = p.accent[500] },
+        Keyword = apply_style({ fg = p.primary[500] }, s.keywords or {}),
+        Exception = { fg = p.error[500] },
         PreProc = { fg = p.secondary[500] },
         Include = { fg = p.secondary[500] },
         Define = { fg = p.secondary[500] },
@@ -90,10 +101,10 @@ function M.setup(palette)
         Tag = { fg = p.primary[500] },
         Delimiter = { fg = p.text[600] },
         SpecialComment = { fg = p.text[600], italic = true },
-        Debug = { fg = p.accent[500] },
+        Debug = { fg = p.error[500] },
         Underlined = { underline = true },
         Ignore = { fg = p.text[500] },
-        Error = { fg = p.background[50], bg = p.accent[500] },
+        Error = { fg = p.background[50], bg = p.error[500] },
         Todo = { fg = p.background[50], bg = p.primary[500], bold = true },
 
         -- Treesitter
@@ -341,18 +352,18 @@ function M.setup(palette)
         ["@keyword.ensure"] = { fg = p.secondary[500] },
         ["@keyword.alias"] = { fg = p.secondary[500] },
         ["@keyword.undef"] = { fg = p.secondary[500] },
-        ["@keyword.defined?"] = { fg = p.secondary[500] },
+        ["@keyword.defined"] = { fg = p.secondary[500] },
         
         -- Swift
-        ["@keyword mutating"] = { fg = p.secondary[500] },
-        ["@keyword nonmutating"] = { fg = p.secondary[500] },
-        ["@keyword convenience"] = { fg = p.secondary[500] },
-        ["@keyword override"] = { fg = p.secondary[500] },
-        ["@keyword required"] = { fg = p.secondary[500] },
-        ["@keyword optional"] = { fg = p.secondary[500] },
-        ["@keyword lazy"] = { fg = p.secondary[500] },
-        ["@keyword weak"] = { fg = p.secondary[500] },
-        ["@keyword unowned"] = { fg = p.secondary[500] },
+        ["@keyword.mutating"] = { fg = p.secondary[500] },
+        ["@keyword.nonmutating"] = { fg = p.secondary[500] },
+        ["@keyword.convenience"] = { fg = p.secondary[500] },
+        ["@keyword.override"] = { fg = p.secondary[500] },
+        ["@keyword.required"] = { fg = p.secondary[500] },
+        ["@keyword.optional"] = { fg = p.secondary[500] },
+        ["@keyword.lazy"] = { fg = p.secondary[500] },
+        ["@keyword.weak"] = { fg = p.secondary[500] },
+        ["@keyword.unowned"] = { fg = p.secondary[500] },
         
         -- Kotlin
         ["@keyword.val"] = { fg = p.secondary[500] },
@@ -804,15 +815,13 @@ function M.setup(palette)
         -- QuickFix
         qfLineNr = { fg = p.text[600] },
         qfFileName = { fg = p.secondary[400] },
-        qfError = { fg = p.accent[500] },
-        qfWarning = { fg = p.primary[500] },
-        qfInfo = { fg = p.secondary[400] },
-        qfNote = { fg = p.text[600] },
+        qfError = { fg = p.error[500] },
+        qfWarning = { fg = p.warning[500] },
+        qfInfo = { fg = p.info[400] },
+        qfNote = { fg = p.hint[400] },
     }
 
-    for group, hl in pairs(highlights) do
-        vim.api.nvim_set_hl(0, group, hl)
-    end
+    return highlights
 end
 
 return M
