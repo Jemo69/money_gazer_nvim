@@ -1,1 +1,1 @@
-require('moneygazer').setup()
+vim.cmd.colorscheme("moneygazer")
