@@ -831,6 +831,10 @@ function M.setup(palette, styles, util, opts)
         qfWarning = { fg = p.warning[500] },
         qfInfo = { fg = p.info[400] },
         qfNote = { fg = p.hint[400] },
+
+        -- Plugin Integrations (organized in separate module)
+        -- All plugin integrations are now defined in groups/integrations.lua
+        -- to keep the codebase maintainable and follow Catppuccin's architecture
     }
 
     return highlights
