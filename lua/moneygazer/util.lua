@@ -132,4 +132,16 @@ function M.complementary(hex)
     return string.format('#%02x%02x%02x', 255 - r, 255 - g, 255 - b)
 end
 
+--- Darken a hex color against a background
+---@param color string Hex color to darken
+---@param amount number How much to darken (0.0 to 1.0)
+---@param bg string Background color (for alpha blending)
+---@return string Darkened/blended hex color
+function M.darken(color, amount, bg)
+    if not bg or bg == 'NONE' then
+        return M.adjust_brightness(color, -amount)
+    end
+    return M.blend(color, bg, amount)
+end
+
 return M

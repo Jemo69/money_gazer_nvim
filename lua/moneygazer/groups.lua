@@ -1,30 +1,40 @@
 local M = {}
 
-function M.setup(palette, styles, util)
+function M.setup(palette, styles, util, opts)
     local p = palette
     local s = styles or {}
     local u = util or {}
+    local O = opts or {}
 
     local function apply_style(group, style_table)
         local hl = vim.deepcopy(group)
-        for key, value in pairs(style_table) do
-            hl[key] = value
+        if style_table and next(style_table) ~= nil then
+            for key, value in pairs(style_table) do
+                hl[key] = value
+            end
         end
         return hl
     end
 
+    local function darken(color, amount)
+        if u.darken then
+            return u.darken(color, amount, O.transparent_background and 'NONE' or p.background[50])
+        end
+        return color
+    end
+
     local highlights = {
         -- Editor UI
-        Normal = { fg = p.text[900], bg = p.background[50] },
-        SignColumn = { bg = p.background[50] },
-        MsgArea = { fg = p.text[800], bg = p.background[50] },
-        ModeMsg = { fg = p.text[800], bg = p.background[50], bold = true },
-        MsgSeparator = { fg = p.text[800], bg = p.background[50] },
-        SpellBad = { sp = p.primary[500], undercurl = true },
-        SpellCap = { sp = p.secondary[500], undercurl = true },
-        SpellLocal = { sp = p.accent[500], undercurl = true },
-        SpellRare = { sp = p.primary[400], undercurl = true },
-        NormalNC = { fg = p.text[800], bg = p.background[50] },
+        Normal = { fg = p.text[900], bg = O.transparent_background and 'NONE' or p.background[50] },
+        SignColumn = { bg = O.transparent_background and 'NONE' or p.background[50] },
+        MsgArea = { fg = p.text[800], bg = O.transparent_background and 'NONE' or p.background[50] },
+        ModeMsg = { fg = p.text[800], bg = O.transparent_background and 'NONE' or p.background[50], bold = true },
+        MsgSeparator = { fg = p.text[800], bg = O.transparent_background and 'NONE' or p.background[50] },
+        SpellBad = { sp = p.error[500], undercurl = true },
+        SpellCap = { sp = p.warning[500], undercurl = true },
+        SpellLocal = { sp = p.hint[500], undercurl = true },
+        SpellRare = { sp = p.primary[500], undercurl = true },
+        NormalNC = { fg = p.text[800], bg = O.transparent_background and 'NONE' or p.background[50] },
         Pmenu = { fg = p.text[800], bg = p.background[100] },
         PmenuSel = { fg = p.background[50], bg = p.primary[500], bold = true },
         PmenuSbar = { bg = p.background[200] },
@@ -38,8 +48,8 @@ function M.setup(palette, styles, util)
         CursorColumn = { bg = p.background[100] },
         ColorColumn = { bg = p.background[100] },
         Whitespace = { fg = p.background[200] },
-        VertSplit = { fg = p.background[200], bg = p.background[50] },
-        WinSeparator = { fg = p.background[200], bg = p.background[50] },
+        VertSplit = { fg = p.background[200], bg = O.transparent_background and 'NONE' or p.background[50] },
+        WinSeparator = { fg = p.background[200], bg = O.transparent_background and 'NONE' or p.background[50] },
         StatusLine = { fg = p.text[800], bg = p.background[100] },
         StatusLineNC = { fg = p.text[500], bg = p.background[50] },
         Cursor = { fg = p.background[50], bg = p.text[900] },
@@ -56,7 +66,7 @@ function M.setup(palette, styles, util)
         Question = { fg = p.primary[500], bold = true },
         MoreMsg = { fg = p.primary[500], bold = true },
         ErrorMsg = { fg = p.background[50], bg = p.error[500] },
-        WarningMsg = { fg = p.primary[500], bold = true },
+        WarningMsg = { fg = p.warning[500], bold = true },
         NonText = { fg = p.background[300] },
         SpecialKey = { fg = p.background[300] },
 
@@ -73,39 +83,118 @@ function M.setup(palette, styles, util)
         -- Syntax
         Comment = apply_style({ fg = p.text[500] }, s.comments or {}),
         Constant = { fg = p.accent[400] },
-        String = { fg = p.accent[300] },
+        String = apply_style({ fg = p.accent[300] }, s.strings or {}),
         Character = { fg = p.accent[400] },
-        Number = { fg = p.primary[400] },
-        Boolean = { fg = p.primary[400], bold = true },
-        Float = { fg = p.primary[400] },
+        Number = apply_style({ fg = p.primary[400] }, s.numbers or {}),
+        Float = { link = "Number" },
+        Boolean = apply_style({ fg = p.primary[400], bold = true }, s.booleans or {}),
         Identifier = apply_style({ fg = p.text[800] }, s.variables or {}),
         Function = apply_style({ fg = p.secondary[400] }, s.functions or {}),
         Statement = { fg = p.primary[500] },
-        Conditional = { fg = p.primary[500] },
-        Repeat = { fg = p.primary[500] },
+        Conditional = apply_style({ fg = p.primary[500] }, s.conditionals or {}),
+        Repeat = apply_style({ fg = p.primary[500] }, s.loops or {}),
         Label = { fg = p.primary[500] },
-        Operator = { fg = p.text[700] },
-        Keyword = apply_style({ fg = p.primary[500] }, s.keywords or {}),
+        Operator = apply_style({ fg = p.text[700] }, s.operators or {}),
+        Keyword = apply_style({ fg = p.primary[500], bold = true }, s.keywords or {}),
         Exception = { fg = p.error[500] },
         PreProc = { fg = p.secondary[500] },
         Include = { fg = p.secondary[500] },
-        Define = { fg = p.secondary[500] },
+        Define = { link = "PreProc" },
         Macro = { fg = p.secondary[500] },
         PreCondit = { fg = p.secondary[500] },
-        Type = { fg = p.secondary[300] },
+        Type = apply_style({ fg = p.secondary[300] }, s.types or {}),
         StorageClass = { fg = p.secondary[300] },
         Structure = { fg = p.secondary[300], bold = true },
-        Typedef = { fg = p.secondary[300] },
+        Typedef = { link = "Type" },
         Special = { fg = p.accent[500] },
-        SpecialChar = { fg = p.accent[500] },
+        SpecialChar = { link = "Special" },
         Tag = { fg = p.primary[500] },
         Delimiter = { fg = p.text[600] },
         SpecialComment = { fg = p.text[600], italic = true },
         Debug = { fg = p.error[500] },
         Underlined = { underline = true },
-        Ignore = { fg = p.text[500] },
+        Bold = { bold = true },
+        Italic = { italic = true },
         Error = { fg = p.background[50], bg = p.error[500] },
-        Todo = { fg = p.background[50], bg = p.primary[500], bold = true },
+        Todo = { bg = p.primary[500], fg = p.background[50], bold = true },
+        qfLineNr = { fg = p.warning[500] },
+        qfFileName = { fg = p.secondary[400] },
+        htmlH1 = { fg = p.accent[500], bold = true },
+        htmlH2 = { fg = p.secondary[400], bold = true },
+        mkdCodeDelimiter = { bg = p.background[50], fg = p.text[800] },
+        mkdCodeStart = { fg = p.primary[500], bold = true },
+        mkdCodeEnd = { fg = p.primary[500], bold = true },
+
+        -- debugging
+        debugPC = { bg = O.transparent_background and 'NONE' or darken(p.background[100], 0.2) },
+        debugBreakpoint = { bg = p.background[50], fg = p.background[300] },
+
+        -- illuminate
+        illuminatedWord = { bg = p.background[100] },
+        illuminatedCurWord = { bg = p.background[150] },
+
+        -- diff
+        Added = { fg = p.success[500] },
+        Changed = { fg = p.info[500] },
+        diffAdded = { fg = p.success[500] },
+        diffRemoved = { fg = p.error[500] },
+        diffChanged = { fg = p.info[500] },
+        diffOldFile = { fg = p.warning[500] },
+        diffNewFile = { fg = p.primary[400] },
+        diffFile = { fg = p.info[500] },
+        diffLine = { fg = p.background[300] },
+        diffIndexLine = { fg = p.accent[500] },
+        DiffAdd = { bg = darken(p.success[500], 0.18) },
+        DiffChange = { bg = darken(p.info[500], 0.07) },
+        DiffDelete = { bg = darken(p.error[500], 0.18) },
+        DiffText = { bg = darken(p.info[500], 0.30) },
+
+        -- NeoVim
+        healthError = { fg = p.error[500] },
+        healthSuccess = { fg = p.success[500] },
+        healthWarning = { fg = p.warning[500] },
+
+        -- misc
+
+        -- glyphs
+        GlyphPalette1 = { fg = p.error[500] },
+        GlyphPalette2 = { fg = p.accent[500] },
+        GlyphPalette3 = { fg = p.primary[500] },
+        GlyphPalette4 = { fg = p.secondary[500] },
+        GlyphPalette6 = { fg = p.accent[400] },
+        GlyphPalette7 = { fg = p.text[900] },
+        GlyphPalette9 = { fg = p.error[500] },
+
+        -- rainbow
+        rainbow1 = { fg = p.error[500] },
+        rainbow2 = { fg = p.primary[400] },
+        rainbow3 = { fg = p.primary[500] },
+        rainbow4 = { fg = p.success[500] },
+        rainbow5 = { fg = p.secondary[400] },
+        rainbow6 = { fg = p.secondary[300] },
+
+        -- csv
+        csvCol0 = { fg = p.error[500] },
+        csvCol1 = { fg = p.accent[400] },
+        csvCol2 = { fg = p.primary[500] },
+        csvCol3 = { fg = p.success[500] },
+        csvCol4 = { fg = p.text[700] },
+        csvCol5 = { fg = p.secondary[500] },
+        csvCol6 = { fg = p.secondary[300] },
+        csvCol7 = { fg = p.primary[400] },
+        csvCol8 = { fg = p.accent[500] },
+
+        -- markdown
+        markdownHeadingDelimiter = { fg = p.primary[400], bold = true },
+        markdownCode = { fg = p.primary[500] },
+        markdownCodeBlock = { fg = p.primary[500] },
+        markdownLinkText = { fg = p.secondary[400], underline = true },
+        markdownH1 = { link = "rainbow1" },
+        markdownH2 = { link = "rainbow2" },
+        markdownH3 = { link = "rainbow3" },
+        markdownH4 = { link = "rainbow4" },
+        markdownH5 = { link = "rainbow5" },
+        markdownH6 = { link = "rainbow6" },
 
         -- Treesitter
         ["@annotation"] = { fg = p.secondary[400] },
@@ -115,9 +204,9 @@ function M.setup(palette, styles, util)
         ["@character.special"] = { link = "SpecialChar" },
         ["@comment"] = { link = "Comment" },
         ["@comment.documentation"] = { fg = p.text[400], italic = true },
-        ["@comment.error"] = { fg = p.accent[500], bold = true },
-        ["@comment.warning"] = { fg = p.primary[500], bold = true },
-        ["@comment.note"] = { fg = p.secondary[400], bold = true },
+        ["@comment.error"] = { fg = p.error[500], bold = true },
+        ["@comment.warning"] = { fg = p.warning[500], bold = true },
+        ["@comment.note"] = { fg = p.info[400], bold = true },
         ["@comment.todo"] = { fg = p.primary[400], bold = true },
         ["@conditional"] = { link = "Conditional" },
         ["@constant"] = { link = "Constant" },
@@ -136,17 +225,58 @@ function M.setup(palette, styles, util)
         ["@function.macro"] = { fg = p.secondary[500] },
         ["@function.method"] = { link = "Function" },
         ["@include"] = { link = "Include" },
-        ["@keyword"] = { link = "Keyword" },
+        ["@keyword"] = { link = "Keyword", bold = true },
+        ["@keyword.directive"] = { fg = p.secondary[500] },
+        ["@keyword.directive.define"] = { fg = p.secondary[500] },
         ["@keyword.async"] = { fg = p.secondary[500], italic = true },
         ["@keyword.export"] = { fg = p.secondary[500], italic = true },
         ["@keyword.function"] = { fg = p.secondary[500], italic = true },
         ["@keyword.operator"] = { fg = p.primary[500] },
+        ["@keyword.operator.logical"] = { fg = p.primary[400] },
+        ["@keyword.operator.arithmetic"] = { fg = p.primary[400] },
+        ["@keyword.operator.comparison"] = { fg = p.primary[400] },
+        ["@keyword.operator.bitwise"] = { fg = p.primary[400] },
+        ["@keyword.operator.assignment"] = { fg = p.primary[400] },
+        ["@keyword.operator.increment"] = { fg = p.primary[400] },
+        ["@keyword.operator.decrement"] = { fg = p.primary[400] },
         ["@keyword.return"] = { fg = p.primary[500], italic = true },
         ["@keyword.import"] = { fg = p.secondary[500], italic = true },
         ["@keyword.conditional"] = { link = "Conditional" },
         ["@keyword.repeat"] = { link = "Repeat" },
-        ["@keyword.debug"] = { link = "Debug" },
-        ["@keyword.directive"] = { fg = p.secondary[500] },
+        ["@keyword.type"] = { fg = p.secondary[400] },
+        ["@keyword.type.enum"] = { fg = p.secondary[400] },
+        ["@keyword.type.struct"] = { fg = p.secondary[400] },
+        ["@keyword.type.interface"] = { fg = p.secondary[400] },
+        ["@keyword.type.union"] = { fg = p.secondary[400] },
+        ["@keyword.type.class"] = { fg = p.secondary[400] },
+        ["@keyword.type.typedef"] = { fg = p.secondary[400] },
+        ["@keyword.modifier"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.let"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.mut"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.ref"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.unsafe"] = { fg = p.error[500] },
+        ["@keyword.modifier.const"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.static"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.volatile"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.register"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.thread_local"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.virtual"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.inline"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.extern"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.abstract"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.final"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.override"] = { fg = p.secondary[400] },
+        ["@keyword.storage"] = { fg = p.secondary[400] },
+        ["@keyword.storage.class"] = { fg = p.secondary[400] },
+        ["@keyword.storage.typedef"] = { fg = p.secondary[400] },
+        ["@keyword.storage.union"] = { fg = p.secondary[400] },
+        ["@keyword.storage.enum"] = { fg = p.secondary[400] },
+        ["@keyword.storage.struct"] = { fg = p.secondary[400] },
+        ["@keyword.storage.variable"] = { fg = p.secondary[400] },
+        ["@keyword.storage.constant"] = { fg = p.secondary[400] },
+        ["@keyword.storage.function"] = { fg = p.secondary[400] },
+        ["@keyword.storage.type"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.attribute"] = { fg = p.secondary[400] },
         ["@label"] = { link = "Label" },
         ["@method"] = { link = "Function" },
         ["@method.call"] = { link = "Function" },
@@ -188,16 +318,16 @@ function M.setup(palette, styles, util)
         ["@text.uri"] = { fg = p.secondary[400], underline = true },
         ["@text.todo"] = { link = "Todo" },
         ["@text.todo.unchecked"] = { fg = p.text[500] },
-        ["@text.todo.checked"] = { fg = p.secondary[400] },
+        ["@text.todo.checked"] = { fg = p.info[400] },
         ["@text.math"] = { fg = p.primary[400] },
         ["@text.environment"] = { fg = p.secondary[400] },
         ["@text.environment.name"] = { fg = p.primary[400] },
         ["@text.reference"] = { fg = p.secondary[500] },
-        ["@text.diff.add"] = { fg = p.secondary[400] },
-        ["@text.diff.delete"] = { fg = p.accent[500] },
-        ["@text.note"] = { fg = p.secondary[400] },
-        ["@text.warning"] = { fg = p.primary[500] },
-        ["@text.danger"] = { fg = p.accent[500] },
+        ["@text.diff.add"] = { fg = p.success[400] },
+        ["@text.diff.delete"] = { fg = p.error[500] },
+        ["@text.note"] = { fg = p.info[400] },
+        ["@text.warning"] = { fg = p.warning[500] },
+        ["@text.danger"] = { fg = p.error[500] },
         ["@type"] = { link = "Type" },
         ["@type.builtin"] = { fg = p.secondary[300], bold = true },
         ["@type.definition"] = { fg = p.secondary[300] },
@@ -212,7 +342,7 @@ function M.setup(palette, styles, util)
         ["@variable.static"] = { fg = p.secondary[400] },
         ["@variable.member"] = { fg = p.text[800] },
         ["@variable.object"] = { fg = p.text[800] },
-        
+
         -- Modern Treesitter (0.8+)
         ["@variable.parameter"] = { link = "@parameter" },
         ["@variable.member"] = { link = "@field" },
@@ -226,7 +356,7 @@ function M.setup(palette, styles, util)
         ["@markup.link.url"] = { link = "@text.uri" },
         ["@markup.link.label"] = { link = "Special" },
         ["@markup.list"] = { fg = p.primary[500] },
-        ["@markup.list.checked"] = { fg = p.secondary[400] },
+        ["@markup.list.checked"] = { fg = p.info[400] },
         ["@markup.list.unchecked"] = { fg = p.text[500] },
 
         -- LSP Semantic Tokens
@@ -265,8 +395,8 @@ function M.setup(palette, styles, util)
         ["@lsp.mod.modification"] = { link = "Structure" },
         ["@lsp.mod.readonly"] = { link = "Constant" },
         ["@lsp.mod.static"] = { fg = p.secondary[400] },
-        
-        -- Language Specific Enhancements
+
+        -- Language Specific
         ["@keyword.coroutine"] = { fg = p.secondary[500] },
         ["@keyword.exception"] = { link = "Exception" },
         ["@keyword.modifier"] = { fg = p.secondary[400] },
@@ -279,280 +409,83 @@ function M.setup(palette, styles, util)
         ["@keyword.modifier.const"] = { fg = p.secondary[400] },
         ["@keyword.modifier.mut"] = { fg = p.secondary[400] },
         ["@keyword.modifier.ref"] = { fg = p.secondary[400] },
-        
-        -- JavaScript/TypeScript
         ["@tag.jsx"] = { fg = p.primary[500] },
         ["@tag.tsx"] = { fg = p.primary[500] },
         ["@constructor.js"] = { fg = p.secondary[300] },
         ["@constructor.ts"] = { fg = p.secondary[300] },
         ["@keyword.await"] = { fg = p.secondary[500], italic = true },
         ["@keyword.yield"] = { fg = p.secondary[500], italic = true },
-        ["@keyword.typeof"] = { fg = p.secondary[500] },
-        ["@keyword.instanceof"] = { fg = p.secondary[500] },
-        ["@keyword.new"] = { fg = p.secondary[500] },
-        
-        -- Python
-        ["@keyword.self"] = { fg = p.secondary[400], italic = true },
-        ["@keyword.super"] = { fg = p.secondary[400], italic = true },
-        ["@keyword.lambda"] = { fg = p.secondary[500] },
-        ["@decorator"] = { fg = p.secondary[400] },
-        ["@decorator.parameter"] = { fg = p.text[800] },
-        
-        -- Rust
-        ["@keyword.crate"] = { fg = p.secondary[500] },
-        ["@keyword.macro"] = { fg = p.secondary[500] },
-        ["@keyword.mod"] = { fg = p.secondary[400] },
-        ["@keyword.ref"] = { fg = p.secondary[400] },
-        ["@keyword.move"] = { fg = p.secondary[400] },
-        
-        -- Go
-        ["@keyword.channel"] = { fg = p.secondary[500] },
-        ["@keyword.defer"] = { fg = p.secondary[500] },
-        ["@keyword.go"] = { fg = p.secondary[500] },
-        ["@keyword.select"] = { fg = p.secondary[500] },
-        ["@keyword.range"] = { fg = p.secondary[500] },
-        ["@keyword.type"] = { fg = p.secondary[500] },
-        ["@keyword.interface"] = { fg = p.secondary[500] },
-        ["@keyword.struct"] = { fg = p.secondary[500] },
-        ["@keyword.map"] = { fg = p.secondary[500] },
-        ["@keyword.chan"] = { fg = p.secondary[500] },
-        
-        -- C/C++
-        ["@keyword.extern"] = { fg = p.secondary[500] },
-        ["@keyword.register"] = { fg = p.secondary[500] },
-        ["@keyword.volatile"] = { fg = p.secondary[500] },
-        ["@keyword.restrict"] = { fg = p.secondary[500] },
-        ["@keyword.sizeof"] = { fg = p.secondary[500] },
-        ["@keyword.alignof"] = { fg = p.secondary[500] },
-        
-        -- Java
-        ["@keyword.package"] = { fg = p.secondary[500] },
-        ["@keyword.extends"] = { fg = p.secondary[500] },
-        ["@keyword.implements"] = { fg = p.secondary[500] },
-        ["@keyword.this"] = { fg = p.secondary[400], italic = true },
-        ["@keyword.super"] = { fg = p.secondary[400], italic = true },
-        
-        -- PHP
-        ["@keyword.namespace"] = { fg = p.secondary[500] },
-        ["@keyword.use"] = { fg = p.secondary[500] },
-        ["@keyword.class"] = { fg = p.secondary[500] },
-        ["@keyword.trait"] = { fg = p.secondary[500] },
-        ["@keyword.interface"] = { fg = p.secondary[500] },
-        ["@keyword.abstract"] = { fg = p.secondary[500] },
-        ["@keyword.final"] = { fg = p.secondary[500] },
-        ["@keyword.public"] = { fg = p.secondary[500] },
-        ["@keyword.private"] = { fg = p.secondary[500] },
-        ["@keyword.protected"] = { fg = p.secondary[500] },
-        
-        -- Ruby
-        ["@keyword.module"] = { fg = p.secondary[500] },
-        ["@keyword.begin"] = { fg = p.secondary[500] },
-        ["@keyword.end"] = { fg = p.secondary[500] },
-        ["@keyword.rescue"] = { fg = p.secondary[500] },
-        ["@keyword.ensure"] = { fg = p.secondary[500] },
-        ["@keyword.alias"] = { fg = p.secondary[500] },
-        ["@keyword.undef"] = { fg = p.secondary[500] },
-        ["@keyword.defined"] = { fg = p.secondary[500] },
-        
-        -- Swift
-        ["@keyword.mutating"] = { fg = p.secondary[500] },
-        ["@keyword.nonmutating"] = { fg = p.secondary[500] },
-        ["@keyword.convenience"] = { fg = p.secondary[500] },
-        ["@keyword.override"] = { fg = p.secondary[500] },
-        ["@keyword.required"] = { fg = p.secondary[500] },
-        ["@keyword.optional"] = { fg = p.secondary[500] },
-        ["@keyword.lazy"] = { fg = p.secondary[500] },
-        ["@keyword.weak"] = { fg = p.secondary[500] },
-        ["@keyword.unowned"] = { fg = p.secondary[500] },
-        
-        -- Kotlin
-        ["@keyword.val"] = { fg = p.secondary[500] },
-        ["@keyword.var"] = { fg = p.secondary[500] },
-        ["@keyword.object"] = { fg = p.secondary[500] },
-        ["@keyword.companion"] = { fg = p.secondary[500] },
-        ["@keyword.data"] = { fg = p.secondary[500] },
-        ["@keyword.sealed"] = { fg = p.secondary[500] },
-        ["@keyword.open"] = { fg = p.secondary[500] },
-        
-        -- C#
-        ["@keyword.using"] = { fg = p.secondary[500] },
-        ["@keyword.get"] = { fg = p.secondary[500] },
-        ["@keyword.set"] = { fg = p.secondary[500] },
-        ["@keyword.add"] = { fg = p.secondary[500] },
-        ["@keyword.remove"] = { fg = p.secondary[500] },
-        ["@keyword.where"] = { fg = p.secondary[500] },
-        ["@keyword.partial"] = { fg = p.secondary[500] },
-        ["@keyword.async"] = { fg = p.secondary[500] },
-        ["@keyword.await"] = { fg = p.secondary[500] },
-        
-        -- Lua
-        ["@keyword.local"] = { fg = p.secondary[500] },
-        ["@keyword.function"] = { fg = p.secondary[500] },
-        ["@keyword.return"] = { fg = p.secondary[500] },
-        ["@keyword.end"] = { fg = p.secondary[500] },
-        ["@keyword.if"] = { fg = p.secondary[500] },
-        ["@keyword.then"] = { fg = p.secondary[500] },
-        ["@keyword.else"] = { fg = p.secondary[500] },
-        ["@keyword.elseif"] = { fg = p.secondary[500] },
-        ["@keyword.for"] = { fg = p.secondary[500] },
-        ["@keyword.while"] = { fg = p.secondary[500] },
-        ["@keyword.repeat"] = { fg = p.secondary[500] },
-        ["@keyword.until"] = { fg = p.secondary[500] },
-        ["@keyword.do"] = { fg = p.secondary[500] },
-        ["@keyword.in"] = { fg = p.secondary[500] },
-        
-        -- SQL
-        ["@keyword.select"] = { fg = p.primary[500], bold = true },
-        ["@keyword.insert"] = { fg = p.primary[500], bold = true },
-        ["@keyword.update"] = { fg = p.primary[500], bold = true },
-        ["@keyword.delete"] = { fg = p.primary[500], bold = true },
-        ["@keyword.create"] = { fg = p.primary[500], bold = true },
-        ["@keyword.drop"] = { fg = p.primary[500], bold = true },
-        ["@keyword.alter"] = { fg = p.primary[500], bold = true },
-        ["@keyword.from"] = { fg = p.primary[500], bold = true },
-        ["@keyword.where"] = { fg = p.primary[500], bold = true },
-        ["@keyword.join"] = { fg = p.primary[500], bold = true },
-        ["@keyword.inner"] = { fg = p.primary[500] },
-        ["@keyword.outer"] = { fg = p.primary[500] },
-        ["@keyword.left"] = { fg = p.primary[500] },
-        ["@keyword.right"] = { fg = p.primary[500] },
-        ["@keyword.group"] = { fg = p.primary[500] },
-        ["@keyword.by"] = { fg = p.primary[500] },
-        ["@keyword.order"] = { fg = p.primary[500] },
-        ["@keyword.having"] = { fg = p.primary[500] },
-        ["@keyword.limit"] = { fg = p.primary[500] },
-        ["@keyword.offset"] = { fg = p.primary[500] },
-        ["@keyword.union"] = { fg = p.primary[500] },
-        ["@keyword.all"] = { fg = p.primary[500] },
-        ["@keyword.distinct"] = { fg = p.primary[500] },
-        ["@keyword.exists"] = { fg = p.primary[500] },
-        ["@keyword.between"] = { fg = p.primary[500] },
-        ["@keyword.like"] = { fg = p.primary[500] },
-        ["@keyword.in"] = { fg = p.primary[500] },
-        ["@keyword.and"] = { fg = p.primary[500] },
-        ["@keyword.or"] = { fg = p.primary[500] },
-        ["@keyword.not"] = { fg = p.primary[500] },
-        ["@keyword.is"] = { fg = p.primary[500] },
-        ["@keyword.null"] = { fg = p.primary[500] },
-        
-        -- HTML/Markdown
-        ["@markup.heading.1"] = { fg = p.primary[500], bold = true },
-        ["@markup.heading.2"] = { fg = p.primary[400], bold = true },
-        ["@markup.heading.3"] = { fg = p.primary[300], bold = true },
-        ["@markup.heading.4"] = { fg = p.secondary[300], bold = true },
-        ["@markup.heading.5"] = { fg = p.secondary[400], bold = true },
-        ["@markup.heading.6"] = { fg = p.secondary[500], bold = true },
-        ["@markup.link"] = { fg = p.secondary[400], underline = true },
-        ["@markup.link.label"] = { fg = p.secondary[400] },
-        ["@markup.link.url"] = { fg = p.accent[400], underline = true },
-        ["@markup.quote"] = { fg = p.text[600], italic = true },
-        ["@markup.raw"] = { fg = p.accent[300] },
-        ["@markup.raw.block"] = { fg = p.accent[400] },
-        ["@markup.list"] = { fg = p.primary[500] },
-        ["@markup.list.checked"] = { fg = p.secondary[400] },
-        ["@markup.list.unchecked"] = { fg = p.text[500] },
-        ["@markup.code"] = { fg = p.accent[300] },
-        ["@markup.code.block"] = { fg = p.accent[400] },
-        ["@markup.danger"] = { fg = p.accent[500], bold = true },
-        ["@markup.note"] = { fg = p.secondary[400], bold = true },
-        ["@markup.warning"] = { fg = p.primary[500], bold = true },
-        
-        -- CSS/SCSS
-        ["@tag.css"] = { fg = p.secondary[300] },
-        ["@property.css"] = { fg = p.secondary[400] },
-        ["@property.id"] = { fg = p.primary[400] },
-        ["@property.class"] = { fg = p.secondary[400] },
-        ["@number.css"] = { fg = p.primary[400] },
-        ["@keyword.css"] = { fg = p.secondary[500] },
-        ["@keyword.important"] = { fg = p.accent[500], bold = true },
-        
-        -- Shell/Bash
-        ["@variable.bash"] = { fg = p.text[900] },
-        ["@function.bash"] = { fg = p.secondary[400] },
-        ["@keyword.bash"] = { fg = p.secondary[500] },
-        ["@string.bash"] = { fg = p.accent[300] },
-        ["@operator.bash"] = { fg = p.primary[500] },
-        
-        -- YAML/JSON
-        ["@tag.yaml"] = { fg = p.secondary[400] },
-        ["@field.yaml"] = { fg = p.secondary[400] },
-        ["@string.yaml"] = { fg = p.accent[300] },
-        ["@number.yaml"] = { fg = p.primary[400] },
-        ["@boolean.yaml"] = { fg = p.primary[400] },
-        ["@null.yaml"] = { fg = p.text[500] },
-        ["@property.json"] = { fg = p.secondary[400] },
-        ["@string.json"] = { fg = p.accent[300] },
-        ["@number.json"] = { fg = p.primary[400] },
-        ["@boolean.json"] = { fg = p.primary[400] },
-        ["@null.json"] = { fg = p.text[500] },
-        
-        -- TOML/INI
-        ["@key.toml"] = { fg = p.secondary[400] },
-        ["@string.toml"] = { fg = p.accent[300] },
-        ["@number.toml"] = { fg = p.primary[400] },
-        ["@boolean.toml"] = { fg = p.primary[400] },
-        ["@section.ini"] = { fg = p.secondary[300] },
-        ["@key.ini"] = { fg = p.secondary[400] },
-        
-        -- Make
-        ["@keyword.make"] = { fg = p.secondary[500] },
-        ["@function.make"] = { fg = p.secondary[400] },
-        ["@variable.make"] = { fg = p.text[900] },
-        ["@operator.make"] = { fg = p.primary[500] },
-        
-        -- Dockerfile
-        ["@keyword.dockerfile"] = { fg = p.secondary[500] },
-        ["@string.dockerfile"] = { fg = p.accent[300] },
-        ["@variable.dockerfile"] = { fg = p.text[900] },
-        
-        -- GraphQL
-        ["@keyword.graphql"] = { fg = p.secondary[500] },
-        ["@type.graphql"] = { fg = p.secondary[300] },
-        ["@field.graphql"] = { fg = p.text[800] },
-        ["@argument.graphql"] = { fg = p.text[800] },
-        
-        -- TOML
-        ["@label.toml"] = { fg = p.secondary[400] },
-        ["@string.special.uri.toml"] = { fg = p.secondary[400], underline = true },
-        
+        ["@keyword.type"] = { fg = p.secondary[400] },
+        ["@keyword.type.enum"] = { fg = p.secondary[400] },
+        ["@keyword.type.struct"] = { fg = p.secondary[400] },
+        ["@keyword.type.interface"] = { fg = p.secondary[400] },
+        ["@keyword.type.union"] = { fg = p.secondary[400] },
+        ["@keyword.type.class"] = { fg = p.secondary[400] },
+        ["@keyword.type.typedef"] = { fg = p.secondary[400] },
+        ["@keyword.modifier"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.let"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.mut"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.ref"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.unsafe"] = { fg = p.error[500] },
+        ["@keyword.modifier.const"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.static"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.volatile"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.register"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.thread_local"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.virtual"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.inline"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.extern"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.abstract"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.final"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.override"] = { fg = p.secondary[400] },
+        ["@keyword.storage"] = { fg = p.secondary[400] },
+        ["@keyword.storage.class"] = { fg = p.secondary[400] },
+        ["@keyword.storage.typedef"] = { fg = p.secondary[400] },
+        ["@keyword.storage.union"] = { fg = p.secondary[400] },
+        ["@keyword.storage.enum"] = { fg = p.secondary[400] },
+        ["@keyword.storage.struct"] = { fg = p.secondary[400] },
+        ["@keyword.storage.variable"] = { fg = p.secondary[400] },
+        ["@keyword.storage.constant"] = { fg = p.secondary[400] },
+        ["@keyword.storage.function"] = { fg = p.secondary[400] },
+        ["@keyword.storage.type"] = { fg = p.secondary[400] },
+        ["@keyword.modifier.attribute"] = { fg = p.secondary[400] },
+        ["@tag.jsx"] = { fg = p.primary[500] },
+        ["@tag.tsx"] = { fg = p.primary[500] },
+
         -- Diff
-        DiffAdd = { fg = p.secondary[400], bg = p.background[100] },
-        DiffChange = { fg = p.primary[500], bg = p.background[100] },
-        DiffDelete = { fg = p.accent[500], bg = p.background[100] },
-        DiffText = { fg = p.text[900], bg = p.background[200] },
         DiffAdded = { link = "DiffAdd" },
         DiffChanged = { link = "DiffChange" },
         DiffRemoved = { link = "DiffDelete" },
-        DiffFile = { fg = p.accent[500] },
-        DiffIndexLine = { fg = p.text[600] },
-        
+        DiffFile = { fg = p.info[500] },
+        DiffIndexLine = { fg = p.accent[500] },
+
         -- Git
         gitcommitSummary = { fg = p.text[900] },
         gitcommitComment = { fg = p.text[500], italic = true },
-        gitcommitUntrackedFile = { fg = p.secondary[400] },
-        gitcommitDiscardedFile = { fg = p.accent[500] },
-        gitcommitSelectedFile = { fg = p.secondary[400] },
+        gitcommitUntrackedFile = { fg = p.info[400] },
+        gitcommitDiscardedFile = { fg = p.error[500] },
+        gitcommitSelectedFile = { fg = p.success[400] },
         gitcommitUnmergedFile = { fg = p.primary[500] },
         gitcommitOnBranch = { fg = p.text[600] },
-        gitcommitBranch = { fg = p.secondary[400], bold = true },
-        gitcommitNoBranch = { fg = p.accent[500], bold = true },
+        gitcommitBranch = { fg = p.info[400], bold = true },
+        gitcommitNoBranch = { fg = p.warning[500], bold = true },
         gitcommitHeader = { fg = p.text[600] },
-        gitcommitSelectedType = { fg = p.secondary[400] },
-        gitcommitDiscardedType = { fg = p.accent[500] },
+        gitcommitSelectedType = { fg = p.success[400] },
+        gitcommitDiscardedType = { fg = p.error[500] },
         gitcommitOverflow = { fg = p.primary[500] },
         gitcommitFile = { fg = p.text[800] },
-        
+
         -- Git Signs
-        GitSignsAdd = { fg = p.secondary[400] },
-        GitSignsChange = { fg = p.primary[500] },
-        GitSignsDelete = { fg = p.accent[500] },
-        GitSignsAddLn = { fg = p.background[50], bg = p.secondary[400] },
-        GitSignsChangeLn = { fg = p.background[50], bg = p.primary[500] },
-        GitSignsDeleteLn = { fg = p.background[50], bg = p.accent[500] },
-        GitSignsAddPreview = { fg = p.background[50], bg = p.secondary[400] },
-        GitSignsDeletePreview = { fg = p.background[50], bg = p.accent[500] },
+        GitSignsAdd = { fg = p.success[400] },
+        GitSignsChange = { fg = p.info[500] },
+        GitSignsDelete = { fg = p.error[500] },
+        GitSignsAddLn = { fg = p.background[50], bg = p.success[400] },
+        GitSignsChangeLn = { fg = p.background[50], bg = p.info[500] },
+        GitSignsDeleteLn = { fg = p.background[50], bg = p.error[500] },
+        GitSignsAddPreview = { fg = p.background[50], bg = p.success[400] },
+        GitSignsDeletePreview = { fg = p.background[50], bg = p.error[500] },
         GitSignsCurrentLineBlame = { fg = p.text[500], italic = true },
-        
+
         -- GitGutter
         GitGutterAdd = { link = "GitSignsAdd" },
         GitGutterChange = { link = "GitSignsChange" },
@@ -560,7 +493,7 @@ function M.setup(palette, styles, util)
         GitGutterAddLine = { link = "GitSignsAddLn" },
         GitGutterChangeLine = { link = "GitSignsChangeLn" },
         GitGutterDeleteLine = { link = "GitSignsDeleteLn" },
-        
+
         -- Vim
         vimCmdSep = { fg = p.text[600] },
         vimCommand = { fg = p.secondary[500] },
@@ -584,8 +517,8 @@ function M.setup(palette, styles, util)
         vimGroup = { fg = p.secondary[400] },
         vim9Comment = { link = "Comment" },
         vimSetSep = { fg = p.text[600] },
-        
-        -- Lua (in Vim)
+
+        -- Lua
         luaFunc = { fg = p.secondary[400] },
         luaFunction = { fg = p.secondary[500] },
         luaTable = { fg = p.secondary[300] },
@@ -594,18 +527,18 @@ function M.setup(palette, styles, util)
         luaRepeat = { fg = p.secondary[500] },
         luaLocal = { fg = p.secondary[500] },
         luaKeyword = { fg = p.secondary[500] },
-        
+
         -- Help
         helpCommand = { fg = p.secondary[400], bold = true },
         helpExample = { fg = p.text[700] },
-        helpHeader = { fg = p.secondary[400], bold = true },
+        helpHeader = { fg = p.info[400], bold = true },
         helpSection = { fg = p.primary[500], bold = true },
         helpHyperTextEntry = { fg = p.secondary[400] },
         helpHyperTextJump = { fg = p.secondary[400], underline = true },
         helpURL = { fg = p.secondary[400], underline = true },
-        helpNote = { fg = p.primary[500], bold = true },
+        helpNote = { fg = p.primary[400], bold = true },
         helpSpecial = { fg = p.accent[400] },
-        
+
         -- Man
         manHeader = { fg = p.primary[500], bold = true },
         manSectionHeading = { fg = p.secondary[400], bold = true },
@@ -617,59 +550,59 @@ function M.setup(palette, styles, util)
         manParen = { fg = p.text[600] },
         manPrep = { fg = p.secondary[400] },
         manArg = { fg = p.text[800] },
-        
+
         -- Telescope
         TelescopeNormal = { link = "Normal" },
-        TelescopeBorder = { fg = p.background[400], bg = p.background[50] },
-        TelescopePromptBorder = { fg = p.primary[500], bg = p.background[50] },
-        TelescopePromptPrefix = { fg = p.primary[500], bg = p.background[50] },
-        TelescopePromptNormal = { fg = p.text[900], bg = p.background[50] },
-        TelescopeResultsBorder = { fg = p.background[400], bg = p.background[50] },
-        TelescopeResultsNormal = { fg = p.text[900], bg = p.background[50] },
-        TelescopePreviewBorder = { fg = p.background[400], bg = p.background[50] },
-        TelescopePreviewNormal = { fg = p.text[900], bg = p.background[50] },
+        TelescopeBorder = { fg = p.border[400], bg = O.transparent_background and 'NONE' or p.background[50] },
+        TelescopePromptBorder = { fg = p.primary[500], bg = O.transparent_background and 'NONE' or p.background[50] },
+        TelescopePromptPrefix = { fg = p.primary[500], bg = O.transparent_background and 'NONE' or p.background[50] },
+        TelescopePromptNormal = { fg = p.text[900], bg = O.transparent_background and 'NONE' or p.background[50] },
+        TelescopeResultsBorder = { fg = p.border[400], bg = O.transparent_background and 'NONE' or p.background[50] },
+        TelescopeResultsNormal = { fg = p.text[900], bg = O.transparent_background and 'NONE' or p.background[50] },
+        TelescopePreviewBorder = { fg = p.border[400], bg = O.transparent_background and 'NONE' or p.background[50] },
+        TelescopePreviewNormal = { fg = p.text[900], bg = O.transparent_background and 'NONE' or p.background[50] },
         TelescopeSelection = { fg = p.background[50], bg = p.primary[500] },
-        TelescopeSelectionCaret = { fg = p.primary[500], bg = p.background[50] },
-        TelescopeMultiSelection = { fg = p.secondary[400] },
+        TelescopeSelectionCaret = { fg = p.primary[500], bg = O.transparent_background and 'NONE' or p.background[50] },
+        TelescopeMultiSelection = { fg = p.info[400] },
         TelescopeMatching = { fg = p.primary[400], bold = true },
         TelescopeTitle = { fg = p.primary[500], bold = true },
-        
+
         -- NvimTree
         NvimTreeNormal = { link = "Normal" },
         NvimTreeNormalNC = { link = "NormalNC" },
-        NvimTreeRootFolder = { fg = p.secondary[400], bold = true },
+        NvimTreeRootFolder = { fg = p.info[400], bold = true },
         NvimTreeFolderIcon = { fg = p.primary[400] },
-        NvimTreeFolderName = { fg = p.secondary[400] },
+        NvimTreeFolderName = { fg = p.info[400] },
         NvimTreeEmptyFolderName = { fg = p.text[600] },
-        NvimTreeOpenedFolderName = { fg = p.secondary[400] },
-        NvimTreeSymlink = { fg = p.secondary[400], underline = true },
+        NvimTreeOpenedFolderName = { fg = p.info[400] },
+        NvimTreeSymlink = { fg = p.info[400], underline = true },
         NvimTreeFileIcon = { fg = p.accent[400] },
-        NvimTreeExecFile = { fg = p.secondary[400] },
+        NvimTreeExecFile = { fg = p.info[400] },
         NvimTreeSpecialFile = { fg = p.accent[500], underline = true },
         NvimTreeIndentMarker = { fg = p.background[300] },
-        NvimTreeGitDirty = { fg = p.primary[500] },
-        NvimTreeGitStaged = { fg = p.secondary[400] },
-        NvimTreeGitMerge = { fg = p.accent[500] },
+        NvimTreeGitDirty = { fg = p.warning[500] },
+        NvimTreeGitStaged = { fg = p.success[400] },
+        NvimTreeGitMerge = { fg = p.error[500] },
         NvimTreeGitRenamed = { fg = p.primary[400] },
-        NvimTreeGitNew = { fg = p.secondary[400] },
-        NvimTreeGitDeleted = { fg = p.accent[500] },
+        NvimTreeGitNew = { fg = p.success[400] },
+        NvimTreeGitDeleted = { fg = p.error[500] },
         NvimTreeGitIgnored = { fg = p.text[500] },
         NvimTreeWindowPicker = { fg = p.text[900], bg = p.background[300], bold = true },
-        
+
         -- WhichKey
         WhichKey = { fg = p.primary[500] },
-        WhichKeyGroup = { fg = p.secondary[400] },
+        WhichKeyGroup = { fg = p.info[400] },
         WhichKeyDesc = { fg = p.text[900] },
         WhichKeySeparator = { fg = p.text[500] },
         WhichKeyFloat = { bg = p.background[100] },
         WhichKeyValue = { fg = p.text[600] },
-        
+
         -- Cmp
         CmpItemAbbr = { fg = p.text[800] },
         CmpItemAbbrDeprecated = { fg = p.text[500], strikethrough = true },
         CmpItemAbbrMatch = { fg = p.primary[500], bold = true },
         CmpItemAbbrMatchFuzzy = { fg = p.primary[400] },
-        CmpItemKind = { fg = p.secondary[400] },
+        CmpItemKind = { fg = p.info[400] },
         CmpItemMenu = { fg = p.text[600] },
         CmpItemKindText = { fg = p.text[800] },
         CmpItemKindMethod = { fg = p.secondary[400] },
@@ -689,14 +622,14 @@ function M.setup(palette, styles, util)
         CmpItemKindColor = { fg = p.accent[500] },
         CmpItemKindFile = { fg = p.text[800] },
         CmpItemKindReference = { fg = p.text[800] },
-        CmpItemKindFolder = { fg = p.secondary[400] },
+        CmpItemKindFolder = { fg = p.info[400] },
         CmpItemKindEnumMember = { fg = p.accent[400] },
         CmpItemKindConstant = { fg = p.accent[400] },
         CmpItemKindStruct = { fg = p.secondary[300] },
         CmpItemKindEvent = { fg = p.primary[400] },
         CmpItemKindOperator = { fg = p.text[700] },
         CmpItemKindTypeParameter = { fg = p.secondary[300] },
-        
+
         -- LSP
         LspReferenceText = { fg = p.text[900], bg = p.background[200], underline = true },
         LspReferenceRead = { fg = p.text[900], bg = p.background[200], underline = true },
@@ -704,25 +637,25 @@ function M.setup(palette, styles, util)
         LspCodeLens = { fg = p.text[500] },
         LspCodeLensSeparator = { fg = p.text[400] },
         LspSignatureActiveParameter = { fg = p.text[900], bg = p.background[200], bold = true },
-        
+
         -- Indent Blankline
         IndentBlanklineChar = { fg = p.background[200] },
         IndentBlanklineContextChar = { fg = p.background[400] },
         IndentBlanklineContextStart = { fg = p.background[400] },
         IndentBlanklineSpaceChar = { fg = p.background[200] },
         IndentBlanklineSpaceCharBlankline = { fg = p.background[200] },
-        
+
         -- Treesitter Context
         TreesitterContext = { bg = p.background[100] },
         TreesitterContextLineNumber = { fg = p.text[600] },
-        
+
         -- NvimDAP
-        DapBreakpoint = { fg = p.accent[500] },
-        DapBreakpointCondition = { fg = p.primary[500] },
+        DapBreakpoint = { fg = p.error[500] },
+        DapBreakpointCondition = { fg = p.warning[500] },
         DapBreakpointRejected = { fg = p.text[600] },
-        DapLogPoint = { fg = p.secondary[400] },
-        DapStopped = { fg = p.secondary[400] },
-        
+        DapLogPoint = { fg = p.info[400] },
+        DapStopped = { fg = p.info[400] },
+
         -- BufferLine
         BufferLineFill = { bg = p.background[100] },
         BufferLineBackground = { fg = p.text[500], bg = p.background[100] },
@@ -730,7 +663,7 @@ function M.setup(palette, styles, util)
         BufferLineBufferSelected = { fg = p.text[900], bg = p.background[50], bold = true },
         BufferLineTab = { fg = p.text[600], bg = p.background[100] },
         BufferLineTabSelected = { fg = p.text[900], bg = p.background[50], bold = true },
-        BufferLineTabClose = { fg = p.accent[500], bg = p.background[100] },
+        BufferLineTabClose = { fg = p.error[500], bg = p.background[100] },
         BufferLineIndicatorSelected = { fg = p.primary[500] },
         BufferLineSeparator = { fg = p.background[200], bg = p.background[100] },
         BufferLineSeparatorVisible = { fg = p.background[200], bg = p.background[100] },
@@ -741,80 +674,80 @@ function M.setup(palette, styles, util)
         BufferLineModified = { fg = p.primary[400], bg = p.background[100] },
         BufferLineModifiedVisible = { fg = p.primary[400], bg = p.background[100] },
         BufferLineModifiedSelected = { fg = p.primary[500], bg = p.background[50] },
-        BufferLineError = { fg = p.accent[500], bg = p.background[100] },
-        BufferLineErrorDiagnostic = { fg = p.accent[500], bg = p.background[100] },
-        BufferLineWarning = { fg = p.primary[500], bg = p.background[100] },
-        BufferLineWarningDiagnostic = { fg = p.primary[500], bg = p.background[100] },
-        BufferLineInfo = { fg = p.secondary[400], bg = p.background[100] },
-        BufferLineInfoDiagnostic = { fg = p.secondary[400], bg = p.background[100] },
+        BufferLineError = { fg = p.error[500], bg = p.background[100] },
+        BufferLineErrorDiagnostic = { fg = p.error[500], bg = p.background[100] },
+        BufferLineWarning = { fg = p.warning[500], bg = p.background[100] },
+        BufferLineWarningDiagnostic = { fg = p.warning[500], bg = p.background[100] },
+        BufferLineInfo = { fg = p.info[400], bg = p.background[100] },
+        BufferLineInfoDiagnostic = { fg = p.info[400], bg = p.background[100] },
         BufferLineHint = { fg = p.text[600], bg = p.background[100] },
         BufferLineHintDiagnostic = { fg = p.text[600], bg = p.background[100] },
-        
+
         -- NeoVim
-        healthError = { fg = p.accent[500] },
-        healthSuccess = { fg = p.secondary[400] },
-        healthWarning = { fg = p.primary[500] },
-        
+        healthError = { fg = p.error[500] },
+        healthSuccess = { fg = p.success[500] },
+        healthWarning = { fg = p.warning[500] },
+
         -- Dashboard
         DashboardHeader = { fg = p.primary[500] },
-        DashboardCenter = { fg = p.secondary[400] },
+        DashboardCenter = { fg = p.info[400] },
         DashboardFooter = { fg = p.text[600] },
         DashboardShortCut = { fg = p.accent[400] },
-        
+
         -- Alpha
         AlphaHeader = { fg = p.primary[500] },
-        AlphaHeaderLabel = { fg = p.secondary[400] },
+        AlphaHeaderLabel = { fg = p.info[400] },
         AlphaFooter = { fg = p.text[600] },
         AlphaButtons = { fg = p.text[900] },
-        
+
         -- Leap
         LeapMatch = { fg = p.background[50], bg = p.primary[500], bold = true },
         LeapLabelPrimary = { fg = p.background[50], bg = p.primary[500], bold = true },
-        LeapLabelSecondary = { fg = p.background[50], bg = p.secondary[400], bold = true },
+        LeapLabelSecondary = { fg = p.background[50], bg = p.info[400], bold = true },
         LeapBackdrop = { fg = p.text[400] },
-        
+
         -- Hop
         HopNextKey = { fg = p.primary[500], bold = true },
-        HopNextKey1 = { fg = p.secondary[400], bold = true },
+        HopNextKey1 = { fg = p.info[400], bold = true },
         HopNextKey2 = { fg = p.accent[400] },
         HopUnmatched = { fg = p.text[400] },
-        
+
         -- Illuminate
         IlluminatedWordText = { fg = p.text[900], bg = p.background[200] },
         IlluminatedWordRead = { fg = p.text[900], bg = p.background[200] },
         IlluminatedWordWrite = { fg = p.text[900], bg = p.background[200] },
-        
+
         -- NeoTree
         NeoTreeNormal = { link = "Normal" },
         NeoTreeNormalNC = { link = "NormalNC" },
         NeoTreeDirectoryIcon = { fg = p.primary[400] },
-        NeoTreeDirectoryName = { fg = p.secondary[400] },
+        NeoTreeDirectoryName = { fg = p.info[400] },
         NeoTreeFileName = { fg = p.text[900] },
         NeoTreeFileIcon = { fg = p.accent[400] },
-        NeoTreeGitAdded = { fg = p.secondary[400] },
-        NeoTreeGitModified = { fg = p.primary[500] },
-        NeoTreeGitDeleted = { fg = p.accent[500] },
+        NeoTreeGitAdded = { fg = p.success[400] },
+        NeoTreeGitModified = { fg = p.warning[500] },
+        NeoTreeGitDeleted = { fg = p.error[500] },
         NeoTreeGitRenamed = { fg = p.primary[400] },
-        NeoTreeGitConflict = { fg = p.accent[500], bold = true },
+        NeoTreeGitConflict = { fg = p.error[500], bold = true },
         NeoTreeDimText = { fg = p.text[500] },
         NeoTreeIndentMarker = { fg = p.background[300] },
         NeoTreeExpander = { fg = p.text[600] },
-        
+
         -- StatusLine
         StatusLineTerm = { link = "StatusLine" },
         StatusLineTermNC = { link = "StatusLineNC" },
-        
+
         -- TabLine
         TabLine = { fg = p.text[500], bg = p.background[100] },
         TabLineFill = { bg = p.background[100] },
         TabLineSel = { fg = p.text[900], bg = p.background[50], bold = true },
-        
+
         -- Terminal
-        Terminal = { fg = p.text[900], bg = p.background[50] },
-        
+        Terminal = { fg = p.text[900], bg = O.transparent_background and 'NONE' or p.background[50] },
+
         -- QuickFix
         qfLineNr = { fg = p.text[600] },
-        qfFileName = { fg = p.secondary[400] },
+        qfFileName = { fg = p.info[400] },
         qfError = { fg = p.error[500] },
         qfWarning = { fg = p.warning[500] },
         qfInfo = { fg = p.info[400] },
