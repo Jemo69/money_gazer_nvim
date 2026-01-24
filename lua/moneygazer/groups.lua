@@ -837,6 +837,9 @@ function M.setup(palette, styles, util, opts)
         -- to keep the codebase maintainable and follow Catppuccin's architecture
     }
 
+    local integrations = require("moneygazer.groups.integrations").get(p)
+    highlights = vim.tbl_deep_extend("force", highlights, integrations)
+
     return highlights
 end
 
